@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Village Dairy - Milk Collection Centre</title>
+<style>
+:root{
+  --ink:#17252A; --muted:#5B6E74; --green:#1E5B4F; --green-dark:#143F37;
+  --steel:#E9EEF0; --paper:#fff; --line:#CBD6DA; --warn:#B3402A; --butter:#FBF3D6; --butter-line:#D9C37A;
+  --serif:Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--steel);line-height:1.45}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+nav{background:var(--green-dark);color:#fff;padding:22px 14px;display:flex;flex-direction:column;gap:4px}
+nav h1{font-family:var(--serif);font-size:1.45rem;margin:0 8px;font-weight:700}
+nav p{margin:2px 8px 18px;color:#B9D3CC;font-size:.85rem}
+nav button{all:unset;white-space:nowrap;cursor:pointer;padding:10px 12px;border-radius:6px;color:#DCEBE7;font-size:.97rem}
+nav button:hover{background:rgba(255,255,255,.08)}
+nav button[aria-current="page"]{background:#fff;color:var(--green-dark);font-weight:600}
+nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #E0A82E;outline-offset:2px}
+main{min-width:0;padding:28px clamp(16px,4vw,44px);max-width:1000px;width:100%}
+h2{font-family:var(--serif);font-size:1.6rem;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 20px}
+.view[hidden]{display:none}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:18px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.row.two{grid-template-columns:2fr 1fr}
+.row.three{grid-template-columns:repeat(3,1fr)}
+label{display:block;font-size:.88rem;font-weight:600;margin-bottom:4px}
+input,select{min-width:0;width:100%;padding:10px 11px;font:inherit;border:1px solid #9FB1B7;border-radius:6px;background:#fff;color:var(--ink)}
+.seg{display:flex;gap:8px}
+.seg label{flex:1;margin:0;font-weight:500}
+.seg input{position:absolute;opacity:0;width:0}
+.seg span{display:block;text-align:center;padding:10px;border:1px solid #9FB1B7;border-radius:6px;cursor:pointer}
+.seg input:checked+span{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.seg input:focus-visible+span{outline:3px solid #E0A82E;outline-offset:2px}
+button.primary{background:var(--green);color:#fff;border:0;border-radius:6px;padding:11px 20px;font:inherit;font-weight:600;cursor:pointer}
+button.primary:hover{background:var(--green-dark)}
+button.link{background:none;border:0;color:var(--green);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px;align-items:start}
+.slip{background:var(--butter);border:1.5px dashed var(--butter-line);border-radius:4px;padding:16px 18px}
+.slip small{color:#6d5f2a;display:block}
+.slip .big{font-family:var(--serif);font-size:2.3rem;line-height:1.1;margin:2px 0 12px}
+.slip .mid{font-family:var(--serif);font-size:1.25rem;margin:0}
+.slip .hint{font-size:.88rem;color:#6d5f2a;margin:0}
+.slip .err{color:var(--warn);font-size:.9rem}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--muted);font-size:.86rem}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700;border-bottom:0}
+.empty{color:var(--muted);padding:14px 4px}
+.figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
+.fig{border-left:3px solid var(--green);padding:2px 12px}
+.fig small{color:var(--muted);display:block;font-size:.85rem}
+.fig b{font-family:var(--serif);font-size:1.5rem}
+.fig.due{border-color:var(--warn)}
+.gap{margin-top:18px}
+h3{font-size:1.05rem;margin:0 0 10px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:6px;max-width:92vw;display:none}
+#toast.error{background:var(--warn)}
+@media (max-width:820px){
+  .row.two{grid-template-columns:1fr}
+  .app{grid-template-columns:minmax(0,1fr)}
+  nav{flex-direction:row;flex-wrap:wrap;padding:12px;gap:4px;align-items:center}
+  nav h1{width:100%} nav p{display:none}
+  .split{grid-template-columns:minmax(0,1fr)}
+  .tablewrap{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav aria-label="Main">
+    <h1>Village Dairy</h1>
+    <p>Milk collection centre</p>
+    <button data-view="collect">Record milk</button>
+    <button data-view="farmers">Farmers</button>
+    <button data-view="statement">Statement and payments</button>
+    <button data-view="report">Daily report</button>
+  </nav>
+
+  <main>
+    <!-- RECORD MILK -->
+    <section class="view" id="view-collect">
+      <h2>Record milk</h2>
+      <p class="lead">Enter what the farmer brought. The price is worked out from fat and SNF.</p>
+      <div id="collect-empty" class="panel" hidden>
+        No farmers yet. <button class="link" data-go="farmers">Add a farmer first</button>.
+      </div>
+      <div class="split" id="collect-body">
+        <form class="panel" id="collect-form" autocomplete="off">
+          <div class="row two">
+            <div><label for="c-farmer">Farmer</label><select id="c-farmer" required></select></div>
+            <div><label for="c-date">Date</label><input id="c-date" type="date" required></div>
+          </div>
+          <div class="gap">
+            <label id="shift-label">Shift</label>
+            <div class="seg" role="radiogroup" aria-labelledby="shift-label">
+              <label><input type="radio" name="shift" value="morning"><span>Morning</span></label>
+              <label><input type="radio" name="shift" value="evening"><span>Evening</span></label>
+            </div>
+          </div>
+          <div class="row three gap">
+            <div><label for="c-qty">Litres</label><input id="c-qty" type="number" step="0.1" min="0.1" max="500" inputmode="decimal" required></div>
+            <div><label for="c-fat">Fat %</label><input id="c-fat" type="number" step="0.1" min="0.1" max="12" inputmode="decimal" required></div>
+            <div><label for="c-snf">SNF %</label><input id="c-snf" type="number" step="0.1" min="0.1" max="12" inputmode="decimal" required></div>
+          </div>
+          <div class="gap"><button class="primary" type="submit">Save collection</button></div>
+        </form>
+        <aside class="slip" aria-live="polite">
+          <small>Amount to pay</small>
+          <p class="big" id="slip-amount">&#8377; 0.00</p>
+          <small>Rate per litre</small>
+          <p class="mid" id="slip-rate">&#8377; 0.00</p>
+          <p class="hint" id="slip-hint">Pick a farmer and enter litres, fat and SNF.</p>
+        </aside>
+      </div>
+      <div class="panel gap" id="today-panel">
+        <h3 id="today-title">Collections</h3>
+        <div class="tablewrap" id="today-list"></div>
+      </div>
+    </section>
+
+    <!-- FARMERS -->
+    <section class="view" id="view-farmers" hidden>
+      <h2>Farmers</h2>
+      <p class="lead">Register the farmers who bring milk to this centre.</p>
+      <form class="panel" id="farmer-form" autocomplete="off">
+        <div class="row">
+          <div><label for="f-name">Name</label><input id="f-name" required></div>
+          <div><label for="f-village">Village</label><input id="f-village" required></div>
+          <div><label for="f-phone">Phone (optional)</label><input id="f-phone" inputmode="tel"></div>
+          <div><label for="f-type">Milk type</label>
+            <select id="f-type"><option value="cow">Cow</option><option value="buffalo">Buffalo</option></select></div>
+        </div>
+        <div class="gap"><button class="primary" type="submit">Add farmer</button></div>
+      </form>
+      <div class="panel gap">
+        <div class="row" style="margin-bottom:10px"><div><label for="f-search">Search by name or village</label><input id="f-search"></div></div>
+        <div class="tablewrap" id="farmer-list"></div>
+      </div>
+    </section>
+
+    <!-- STATEMENT -->
+    <section class="view" id="view-statement" hidden>
+      <h2>Statement and payments</h2>
+      <p class="lead">See what a farmer has earned and been paid, and record a payment.</p>
+      <div class="panel">
+        <div class="row">
+          <div><label for="s-farmer">Farmer</label><select id="s-farmer"></select></div>
+          <div><label for="s-from">From</label><input id="s-from" type="date"></div>
+          <div><label for="s-to">To</label><input id="s-to" type="date"></div>
+        </div>
+        <div id="statement-out"></div>
+      </div>
+      <form class="panel gap" id="pay-form" autocomplete="off">
+        <h3>Record a payment</h3>
+        <div class="row">
+          <div><label for="p-amount">Amount (&#8377;)</label><input id="p-amount" type="number" step="0.01" min="0.01" inputmode="decimal" required></div>
+          <div><label for="p-date">Date</label><input id="p-date" type="date" required></div>
+          <div><label for="p-note">Note (optional)</label><input id="p-note"></div>
+        </div>
+        <div class="gap"><button class="primary" type="submit">Save payment</button></div>
+      </form>
+    </section>
+
+    <!-- REPORT -->
+    <section class="view" id="view-report" hidden>
+      <h2>Daily report</h2>
+      <p class="lead">Total milk received and amount payable for one day.</p>
+      <div class="panel">
+        <div class="row"><div><label for="r-date">Date</label><input id="r-date" type="date"></div></div>
+        <div class="tablewrap gap" id="report-out"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => "\u20B9 " + Number(n || 0).toLocaleString("en-IN", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+let farmers = [];
+const farmerById = id => farmers.find(f => f.id === Number(id));
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { headers: {"Content-Type": "application/json"}, ...opts });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Request failed (" + res.status + ")");
+  return data;
+}
+const post = (path, body) => api(path, { method: "POST", body: JSON.stringify(body) });
+
+let toastTimer;
+function toast(msg, isError = false) {
+  const t = $("#toast");
+  t.textContent = msg; t.className = isError ? "error" : ""; t.style.display = "block";
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = "none", 3500);
+}
+const guard = fn => async (...a) => { try { await fn(...a); } catch (e) { toast(e.message, true); } };
+
+/* ---------- navigation ---------- */
+function show(view) {
+  $$(".view").forEach(v => v.hidden = v.id !== "view-" + view);
+  $$("nav button").forEach(b => b.dataset.view === view ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
+  if (view === "collect") renderCollect();
+  if (view === "farmers") renderFarmers();
+  if (view === "statement") renderStatement();
+  if (view === "report") renderReport();
+  location.hash = view;
+}
+$$("nav button").forEach(b => b.addEventListener("click", () => show(b.dataset.view)));
+$$("[data-go]").forEach(b => b.addEventListener("click", () => show(b.dataset.go)));
+
+async function loadFarmers() { farmers = await api("/farmers"); }
+function fillSelect(sel) {
+  const keep = sel.value;
+  sel.innerHTML = farmers.map(f => `<option value="${f.id}">${esc(f.name)} - ${esc(f.village)} (${esc(f.milk_type)})</option>`).join("");
+  if (keep && farmerById(keep)) sel.value = keep;
+}
+
+/* ---------- record milk ---------- */
+function currentShift() { return new Date().getHours() < 12 ? "morning" : "evening"; }
+
+const guardedRenderCollect = guard(async () => {
+  await loadFarmers();
+  $("#collect-empty").hidden = farmers.length > 0;
+  $("#collect-body").hidden = farmers.length === 0;
+  $("#today-panel").hidden = farmers.length === 0;
+  if (!farmers.length) return;
+  fillSelect($("#c-farmer"));
+  if (!$("#c-date").value) $("#c-date").value = today();
+  if (!$("input[name=shift]:checked")) $(`input[name=shift][value=${currentShift()}]`).checked = true;
+  await previewRate();
+  await renderCollections();
+});
+function renderCollect() { guardedRenderCollect(); }
+
+async function previewRate() {
+  const f = farmerById($("#c-farmer").value);
+  const qty = parseFloat($("#c-qty").value), fat = parseFloat($("#c-fat").value), snf = parseFloat($("#c-snf").value);
+  const hint = $("#slip-hint");
+  if (!f || !(fat > 0) || !(snf > 0)) {
+    $("#slip-rate").textContent = money(0); $("#slip-amount").textContent = money(0);
+    hint.className = "hint"; hint.textContent = "Pick a farmer and enter litres, fat and SNF."; return;
+  }
+  try {
+    const r = await api(`/rate?milk_type=${encodeURIComponent(f.milk_type)}&fat=${fat}&snf=${snf}`);
+    $("#slip-rate").textContent = money(r.rate_per_litre);
+    $("#slip-amount").textContent = money((qty > 0 ? qty : 0) * r.rate_per_litre);
+    hint.className = "hint"; hint.textContent = `${cap(f.milk_type)} milk, ${fat}% fat, ${snf}% SNF.`;
+  } catch (e) { hint.className = "err"; hint.textContent = e.message; }
+}
+["c-farmer", "c-qty", "c-fat", "c-snf"].forEach(id => $("#" + id).addEventListener("input", previewRate));
+
+async function renderCollections() {
+  const day = $("#c-date").value || today();
+  const rows = await api("/collections?date=" + day);
+  $("#today-title").textContent = "Collections on " + day;
+  $("#today-list").innerHTML = rows.length ? `<table>
+    <thead><tr><th>Farmer</th><th>Shift</th><th class="num">Litres</th><th class="num">Fat</th><th class="num">SNF</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td>${esc(farmerById(r.farmer_id)?.name ?? "#" + r.farmer_id)}</td><td>${cap(esc(r.shift))}</td>
+      <td class="num">${r.quantity_litres}</td><td class="num">${r.fat}</td><td class="num">${r.snf}</td>
+      <td class="num">${money(r.rate_per_litre)}</td><td class="num">${money(r.amount)}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="2">Total</td><td class="num">${rows.reduce((a, r) => a + r.quantity_litres, 0).toFixed(1)}</td><td colspan="3"></td>
+      <td class="num">${money(rows.reduce((a, r) => a + r.amount, 0))}</td></tr></tfoot></table>`
+    : `<p class="empty">No milk recorded for this date yet.</p>`;
+}
+$("#c-date").addEventListener("change", guard(renderCollections));
+
+$("#collect-form").addEventListener("submit", guard(async e => {
+  e.preventDefault();
+  const f = farmerById($("#c-farmer").value);
+  const rec = await post("/collections", {
+    farmer_id: f.id, date: $("#c-date").value, shift: $("input[name=shift]:checked").value,
+    quantity_litres: $("#c-qty").value, fat: $("#c-fat").value, snf: $("#c-snf").value,
+  });
+  toast(`Saved: ${f.name}, ${rec.quantity_litres} L, ${money(rec.amount)}`);
+  ["c-qty", "c-fat", "c-snf"].forEach(id => $("#" + id).value = "");
+  await previewRate(); await renderCollections();
+  $("#c-farmer").focus();
+}));
+
+/* ---------- farmers ---------- */
+const guardedRenderFarmers = guard(async () => { await loadFarmers(); drawFarmers(); });
+function renderFarmers() { guardedRenderFarmers(); }
+function drawFarmers() {
+  const q = $("#f-search").value.trim().toLowerCase();
+  const rows = farmers.filter(f => !q || f.name.toLowerCase().includes(q) || f.village.toLowerCase().includes(q));
+  $("#farmer-list").innerHTML = rows.length ? `<table>
+    <thead><tr><th>Name</th><th>Village</th><th>Phone</th><th>Milk</th><th>Joined</th></tr></thead>
+    <tbody>${rows.map(f => `<tr><td>${esc(f.name)}</td><td>${esc(f.village)}</td><td>${esc(f.phone || "-")}</td>
+      <td>${cap(esc(f.milk_type))}</td><td>${esc(f.joined_on)}</td></tr>`).join("")}</tbody></table>`
+    : `<p class="empty">${farmers.length ? "No farmer matches your search." : "No farmers yet. Add the first one above."}</p>`;
+}
+$("#f-search").addEventListener("input", drawFarmers);
+$("#farmer-form").addEventListener("submit", guard(async e => {
+  e.preventDefault();
+  const f = await post("/farmers", {
+    name: $("#f-name").value, village: $("#f-village").value, phone: $("#f-phone").value, milk_type: $("#f-type").value,
+  });
+  toast(`${f.name} added`);
+  e.target.reset();
+  await loadFarmers(); drawFarmers();
+  $("#f-name").focus();
+}));
+
+/* ---------- statement ---------- */
+const guardedRenderStatement = guard(async () => {
+  await loadFarmers();
+  fillSelect($("#s-farmer"));
+  if (!$("#s-from").value) $("#s-from").value = today().slice(0, 8) + "01";
+  if (!$("#s-to").value) $("#s-to").value = today();
+  if (!$("#p-date").value) $("#p-date").value = today();
+  await loadStatement();
+});
+function renderStatement() { guardedRenderStatement(); }
+async function loadStatement() {
+  const out = $("#statement-out");
+  if (!farmers.length) { out.innerHTML = `<p class="empty">No farmers yet.</p>`; return; }
+  const id = $("#s-farmer").value;
+  const s = await api(`/farmers/${id}/statement?from=${$("#s-from").value}&to=${$("#s-to").value}`);
+  out.innerHTML = `<div class="figures">
+    <div class="fig"><small>Milk supplied</small><b>${s.total_litres} L</b></div>
+    <div class="fig"><small>Earned</small><b>${money(s.total_earned)}</b></div>
+    <div class="fig"><small>Paid</small><b>${money(s.total_paid)}</b></div>
+    <div class="fig due"><small>Balance due</small><b>${money(s.balance_due)}</b></div></div>`;
+}
+["s-farmer", "s-from", "s-to"].forEach(id => $("#" + id).addEventListener("change", guard(loadStatement)));
+$("#pay-form").addEventListener("submit", guard(async e => {
+  e.preventDefault();
+  if (!farmers.length) throw new Error("Add a farmer first");
+  await post("/payments", { farmer_id: Number($("#s-farmer").value), amount: $("#p-amount").value,
+                            date: $("#p-date").value, note: $("#p-note").value });
+  toast("Payment saved");
+  $("#p-amount").value = ""; $("#p-note").value = "";
+  await loadStatement();
+}));
+
+/* ---------- report ---------- */
+const guardedRenderReport = guard(async () => {
+  if (!$("#r-date").value) $("#r-date").value = today();
+  await loadReport();
+});
+function renderReport() { guardedRenderReport(); }
+async function loadReport() {
+  const r = await api("/reports/daily?date=" + $("#r-date").value);
+  $("#report-out").innerHTML = r.shifts.length ? `<table>
+    <thead><tr><th>Shift</th><th class="num">Farmers</th><th class="num">Litres</th><th class="num">Amount</th></tr></thead>
+    <tbody>${r.shifts.map(s => `<tr><td>${cap(esc(s.shift))}</td><td class="num">${s.farmers}</td>
+      <td class="num">${s.litres}</td><td class="num">${money(s.amount)}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="2">Day total</td><td class="num">${r.total_litres}</td><td class="num">${money(r.total_amount)}</td></tr></tfoot></table>`
+    : `<p class="empty">No milk was recorded on this date.</p>`;
+}
+$("#r-date").addEventListener("change", guard(loadReport));
+
+show(["collect", "farmers", "statement", "report"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "collect");
+</script>
+</body>
+</html>
