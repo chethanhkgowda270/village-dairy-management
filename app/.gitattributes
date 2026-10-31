@@ -1,0 +1,2 @@
+   # Count the web page as part of the app, not as a separate language
+   app/static/* linguist-vendored
